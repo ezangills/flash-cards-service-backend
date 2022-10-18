@@ -1,15 +1,15 @@
 package ch.ts.flashcardsservice.service;
 
-import ch.ts.flashcardsservice.dto.JwtResponse;
-import ch.ts.flashcardsservice.dto.LoginRequest;
-import ch.ts.flashcardsservice.dto.MessageResponse;
-import ch.ts.flashcardsservice.dto.SignupRequest;
+import ch.ts.flashcardsservice.dto.*;
 import ch.ts.flashcardsservice.exception.ServiceException;
+import ch.ts.flashcardsservice.model.RefreshToken;
 import ch.ts.flashcardsservice.model.User;
 import ch.ts.flashcardsservice.model.UserDetailsImpl;
+import ch.ts.flashcardsservice.repository.RefreshTokenRepository;
 import ch.ts.flashcardsservice.repository.UserRepository;
 import ch.ts.flashcardsservice.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
@@ -27,6 +29,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${jwt.refresh-expiration-days}")
+    private Long refreshTokenDurationMs;
 
     public JwtResponse signIn(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
@@ -37,7 +43,30 @@ public class AuthService {
         return new JwtResponse(
                 jwt,
                 userDetails.getUsername(),
-                userDetails.getEmail());
+                userDetails.getEmail(),
+                createRefreshToken(loginRequest.getUsername()));
+    }
+
+    public String createRefreshToken(String username) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUsername(username);
+        refreshToken.setExpiryDate(LocalDateTime.now().plusDays(refreshTokenDurationMs));
+        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken = refreshTokenRepository.save(refreshToken);
+        return refreshToken.getToken();
+    }
+
+    public RefreshToken findRefreshToken(String token) {
+        return refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ServiceException("Refresh token was expired", HttpStatus.BAD_REQUEST));
+    }
+
+    public RefreshToken verifyRefreshTokenExpiration(RefreshToken token) {
+        if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
+            refreshTokenRepository.delete(token);
+            throw new ServiceException("Refresh token was expired", HttpStatus.BAD_REQUEST);
+        }
+        return token;
     }
 
     public MessageResponse signup(SignupRequest signUpRequest) {
@@ -99,5 +128,15 @@ public class AuthService {
         if (!validUsername) {
             throw new ServiceException("Username is invalid. It should start with alphabetic character and only contain alphanumerics and _. Username length should be between 6 and 30 characters", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    public JwtResponse refreshToken(RefreshTokenRequest request) {
+        var refreshToken = verifyRefreshTokenExpiration(findRefreshToken(request.getRefreshToken()));
+        String jwt = jwtUtils.generateTokenFromUsername(refreshToken.getUsername());
+        return new JwtResponse(
+                jwt,
+                refreshToken.getUsername(),
+                userRepository.findByUsername(refreshToken.getUsername()).orElseThrow(() -> new ServiceException("Couldn't refresh token", HttpStatus.INTERNAL_SERVER_ERROR)).getEmail(),
+                createRefreshToken(refreshToken.getUsername()));
     }
 }

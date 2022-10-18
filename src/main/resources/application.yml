@@ -12,3 +12,4 @@ spring:
 jwt:
   secret: ${JWT-SECRET:bababoooyey}
   expiration: ${JWT-EXPIRATION:120000}
+  refresh-expiration-days: ${JWT-REFRESH-EXPIRATION:7}

@@ -6,6 +6,15 @@ create table users
     password VARCHAR(128) NOT NULL
 );
 
+create table refresh_tokens
+(
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(64) NOT NULL,
+    token VARCHAR(36) UNIQUE NOT NULL,
+    expiry_date TIMESTAMP NOT NULL,
+    CONSTRAINT fk_user_token FOREIGN KEY(username) REFERENCES users(username)
+);
+
 create table decks
 (
     id BIGSERIAL PRIMARY KEY,
