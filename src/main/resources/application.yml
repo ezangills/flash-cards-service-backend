@@ -9,3 +9,6 @@ spring:
   liquibase:
     change-log: classpath:/db/liquibase-changelog.xml
     enabled: true
+jwt:
+  secret: ${JWT-SECRET:bababoooyey}
+  expiration: ${120000}
