@@ -9,5 +9,4 @@ import lombok.experimental.Accessors;
 public class CreateDeckRequest {
     private String name;
     private State state;
-    private String username;
 }

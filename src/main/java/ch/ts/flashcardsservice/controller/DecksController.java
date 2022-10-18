@@ -4,6 +4,7 @@ import ch.ts.flashcardsservice.dto.CreateDeckRequest;
 import ch.ts.flashcardsservice.dto.DeckDto;
 import ch.ts.flashcardsservice.dto.UpdateDeckRequest;
 import ch.ts.flashcardsservice.service.DeckService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class DecksController {
     private final DeckService deckService;
 
@@ -21,8 +23,8 @@ public class DecksController {
     }
 
     @GetMapping("/decks")
-    public List<DeckDto> getDecks(@RequestParam String username) {
-        return deckService.getDecks(username);
+    public List<DeckDto> getDecks() {
+        return deckService.getDecks();
     }
 
     @PutMapping("/decks/{deckId}")

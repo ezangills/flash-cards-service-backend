@@ -11,4 +11,4 @@ spring:
     enabled: true
 jwt:
   secret: ${JWT-SECRET:bababoooyey}
-  expiration: ${120000}
+  expiration: ${JWT-EXPIRATION:120000}

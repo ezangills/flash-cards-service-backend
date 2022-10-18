@@ -8,16 +8,18 @@ import ch.ts.flashcardsservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
-/*@RestController
-@RequestMapping("/api/auth")*/
+@RestController
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
 
-    @PostMapping("/signin")
+    @PostMapping(value = "/signin")
     public JwtResponse signin(@Valid @RequestBody LoginRequest loginRequest) {
         return authService.signIn(loginRequest);
     }

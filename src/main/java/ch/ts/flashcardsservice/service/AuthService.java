@@ -74,9 +74,21 @@ public class AuthService {
     }
 
     private void validatePassword(SignupRequest signupRequest) {
-        boolean validPassword = Pattern.compile("“^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=\\\\S+$).{8,20}$”")
-                .matcher(signupRequest.getPassword()).matches();
-        if (!validPassword) {
+        boolean hasUpperCase = false;
+        boolean hasLowerCase = false;
+        boolean hasNumber = false;
+        for (int i = 0; i < signupRequest.getPassword().length(); i++) {
+            if (Character.isUpperCase(signupRequest.getPassword().charAt(i))) {
+                hasUpperCase = true;
+            }
+            if (Character.isLowerCase(signupRequest.getPassword().charAt(i))) {
+                hasLowerCase = true;
+            }
+            if (Character.isDigit(signupRequest.getPassword().charAt(i))) {
+                hasNumber = true;
+            }
+        }
+        if (!hasUpperCase || !hasLowerCase || !hasNumber || signupRequest.getPassword().length() < 8 || signupRequest.getPassword().length() > 20) {
             throw new ServiceException("Password is invalid. Password length should be between 8 and 20 characters. It should contain at least 1 digit, 1 lower case character and 1 upper case character.", HttpStatus.BAD_REQUEST);
         }
     }
