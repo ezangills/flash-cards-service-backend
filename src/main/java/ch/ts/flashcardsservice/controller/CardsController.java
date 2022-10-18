@@ -5,6 +5,7 @@ import ch.ts.flashcardsservice.dto.CreateCardRequest;
 import ch.ts.flashcardsservice.dto.UpdateCardRequest;
 import ch.ts.flashcardsservice.model.State;
 import ch.ts.flashcardsservice.service.CardService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class CardsController {
     private final CardService cardService;
 

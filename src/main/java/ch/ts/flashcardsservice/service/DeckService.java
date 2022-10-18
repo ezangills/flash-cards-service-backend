@@ -8,10 +8,13 @@ import ch.ts.flashcardsservice.mapper.CardMapper;
 import ch.ts.flashcardsservice.model.Card;
 import ch.ts.flashcardsservice.model.Deck;
 import ch.ts.flashcardsservice.model.State;
+import ch.ts.flashcardsservice.model.UserDetailsImpl;
 import ch.ts.flashcardsservice.repository.CardRepository;
 import ch.ts.flashcardsservice.repository.DeckRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,12 +29,12 @@ public class DeckService {
 
     @Transactional
     public DeckDto createDeck(CreateDeckRequest deck) {
-        return cardMapper.map(deckRepository.save(cardMapper.map(deck)));
+        return cardMapper.map(deckRepository.save(cardMapper.map(deck).setUsername(getUsername())));
     }
 
     @Transactional
-    public List<DeckDto> getDecks(String username) {
-        return deckRepository.findAllByUsername(username)
+    public List<DeckDto> getDecks() {
+        return deckRepository.findAllByUsername(getUsername())
                 .stream()
                 .map(cardMapper::map)
                 .toList();
@@ -59,6 +62,14 @@ public class DeckService {
 
     @Transactional
     public Deck findDeckById(Long deckId) {
-        return deckRepository.findById(deckId).orElseThrow(() -> new ServiceException("Deck with id " + deckId + " was not found", HttpStatus.BAD_REQUEST));
+        var deck = deckRepository.findById(deckId).orElseThrow(() -> new ServiceException("Deck with id " + deckId + " was not found", HttpStatus.BAD_REQUEST));
+        if (!deck.getUsername().equals(getUsername())) {
+            throw new ServiceException("You can't access the deck with such id " + deckId, HttpStatus.FORBIDDEN);
+        }
+        return deck;
+    }
+
+    private String getUsername() {
+        return ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
     }
 }

@@ -1,10 +1,21 @@
+create table users
+(
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    email VARCHAR(64) UNIQUE NOT NULL,
+    password VARCHAR(128) NOT NULL
+);
+
 create table decks
 (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(128) NOT NULL,
     state VARCHAR(16) NOT NULL,
-    username VARCHAR(64) NOT NULL
+    username VARCHAR(64) NOT NULL,
+    CONSTRAINT fk_user FOREIGN KEY(username) REFERENCES users(username)
 );
+
+CREATE INDEX ix_decks_username ON decks (username);
 
 create table cards
 (
