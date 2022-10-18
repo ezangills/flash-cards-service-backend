@@ -54,6 +54,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return PERMITTED_URIS.stream().anyMatch(url -> new AntPathRequestMatcher(url).matches(request));
+    }
+
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith(BEARER_START)) {
