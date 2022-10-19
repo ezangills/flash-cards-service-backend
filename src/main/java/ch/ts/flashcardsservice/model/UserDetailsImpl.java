@@ -18,6 +18,7 @@ public class UserDetailsImpl implements UserDetails {
     private String email;
     @JsonIgnore
     private String password;
+    private Boolean isVerified;
     private Collection<? extends GrantedAuthority> authorities;
 
     @Override

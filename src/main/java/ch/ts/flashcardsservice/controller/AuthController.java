@@ -30,4 +30,14 @@ public class AuthController {
     public JwtResponse refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         return authService.refreshToken(request);
     }
+
+    @PostMapping("/verification-request")
+    public MessageResponse verificationRequest(@Valid @RequestBody VerificationRequest request) {
+        return authService.createVerificationRequest(request.getEmail());
+    }
+
+    @PostMapping("/verify")
+    public MessageResponse verify(@Valid @RequestBody VerificationFinishRequest request) {
+        return authService.verify(request);
+    }
 }

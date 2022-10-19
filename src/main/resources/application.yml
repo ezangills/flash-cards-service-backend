@@ -1,15 +1,24 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_BASE:postgres}?prepareThreshold=0
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_BASE}?prepareThreshold=0
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: ${DB_PG_POOL_SIZE:20}
+      maximum-pool-size: ${DB_PG_POOL_SIZE}
   liquibase:
     change-log: classpath:/db/liquibase-changelog.xml
     enabled: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
+    properties:
+      mail.smtp.starttls.enable: true
+      mail.smtp.auth: true
 jwt:
-  secret: ${JWT-SECRET:bababoooyey}
-  expiration: ${JWT-EXPIRATION:120000}
-  refresh-expiration-days: ${JWT-REFRESH-EXPIRATION:7}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration-days: ${JWT_REFRESH_EXPIRATION}

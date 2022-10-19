@@ -5,8 +5,10 @@ import ch.ts.flashcardsservice.exception.ServiceException;
 import ch.ts.flashcardsservice.model.RefreshToken;
 import ch.ts.flashcardsservice.model.User;
 import ch.ts.flashcardsservice.model.UserDetailsImpl;
+import ch.ts.flashcardsservice.model.UserVerification;
 import ch.ts.flashcardsservice.repository.RefreshTokenRepository;
 import ch.ts.flashcardsservice.repository.UserRepository;
+import ch.ts.flashcardsservice.repository.UserVerificationRepository;
 import ch.ts.flashcardsservice.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -30,6 +33,8 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserVerificationRepository userVerificationRepository;
+    private final EmailService emailService;
 
     @Value("${jwt.refresh-expiration-days}")
     private Long refreshTokenDurationMs;
@@ -40,6 +45,9 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        if (!userDetails.getIsVerified()) {
+            throw new ServiceException("User's email is not verified!", HttpStatus.UNAUTHORIZED);
+        }
         return new JwtResponse(
                 jwt,
                 userDetails.getUsername(),
@@ -69,13 +77,16 @@ public class AuthService {
         return token;
     }
 
+    @Transactional
     public MessageResponse signup(SignupRequest signUpRequest) {
         validate(signUpRequest);
         userRepository.save(new User()
                 .setUsername(signUpRequest.getUsername())
+                .setIsVerified(false)
                 .setEmail(signUpRequest.getEmail())
                 .setPassword(encoder.encode(signUpRequest.getPassword())));
-        return new MessageResponse().setMessage("User registered successfully!");
+        verificationRequest(signUpRequest.getEmail());
+        return new MessageResponse().setMessage("User registered successfully! Verify your account by entering the code sent to your email.");
     }
 
     private void validate(SignupRequest signUpRequest) {
@@ -138,5 +149,39 @@ public class AuthService {
                 refreshToken.getUsername(),
                 userRepository.findByUsername(refreshToken.getUsername()).orElseThrow(() -> new ServiceException("Couldn't refresh token", HttpStatus.INTERNAL_SERVER_ERROR)).getEmail(),
                 createRefreshToken(refreshToken.getUsername()));
+    }
+
+    public MessageResponse createVerificationRequest(String email) {
+        deleteExistingVerificationRequest(email);
+        return verificationRequest(email);
+    }
+
+    @Transactional
+    public void deleteExistingVerificationRequest(String email) {
+        userVerificationRepository.findUserVerificationByEmail(email)
+                .ifPresent(x -> userVerificationRepository.deleteById(x.getId()));
+    }
+
+    @Transactional
+    public MessageResponse verificationRequest(String email) {
+        String code = UUID.randomUUID().toString().substring(0, 6);
+        userVerificationRepository.save(new UserVerification()
+                .setEmail(email)
+                .setExpiryDate(LocalDateTime.now().plusMinutes(15))
+                .setId(code));
+        emailService.sendVerificationEmail(email, code);
+        return new MessageResponse().setMessage("Code has been sent to your email.");
+    }
+
+    @Transactional
+    public MessageResponse verify(VerificationFinishRequest request) {
+        var verification = userVerificationRepository.findUserVerificationByEmailAndId(request.getEmail(), request.getCode());
+        if (verification.isPresent()) {
+            userVerificationRepository.deleteById(verification.get().getId());
+            userRepository.save(userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new ServiceException("User was not found", HttpStatus.INTERNAL_SERVER_ERROR))
+                    .setIsVerified(true));
+        }
+        return new MessageResponse().setMessage("User has been verified successfully!");
     }
 }

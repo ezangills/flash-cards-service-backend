@@ -3,7 +3,16 @@ create table users
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(64) UNIQUE NOT NULL,
     email VARCHAR(64) UNIQUE NOT NULL,
-    password VARCHAR(128) NOT NULL
+    password VARCHAR(128) NOT NULL,
+    is_verified BOOLEAN NOT NULL
+);
+
+create table user_verifications
+(
+    id VARCHAR(6) PRIMARY KEY,
+    email VARCHAR(64) UNIQUE NOT NULL,
+    expiry_date TIMESTAMP NOT NULL,
+    CONSTRAINT fk_email_verification FOREIGN KEY(email) REFERENCES users(email)
 );
 
 create table refresh_tokens
