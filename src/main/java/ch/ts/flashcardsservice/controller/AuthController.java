@@ -2,6 +2,8 @@ package ch.ts.flashcardsservice.controller;
 
 import ch.ts.flashcardsservice.dto.*;
 import ch.ts.flashcardsservice.service.AuthService;
+import ch.ts.flashcardsservice.service.RefreshTokenService;
+import ch.ts.flashcardsservice.service.UserVerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +17,8 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final UserVerificationService userVerificationService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping(value = "/signin")
     public JwtResponse signin(@Valid @RequestBody LoginRequest loginRequest) {
@@ -28,16 +32,16 @@ public class AuthController {
 
     @PostMapping("/refreshtoken")
     public JwtResponse refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        return authService.refreshToken(request);
+        return refreshTokenService.refreshToken(request);
     }
 
     @PostMapping("/verification-request")
     public MessageResponse verificationRequest(@Valid @RequestBody VerificationRequest request) {
-        return authService.createVerificationRequest(request.getEmail());
+        return userVerificationService.createVerificationRequest(request.getEmail());
     }
 
     @PostMapping("/verify")
     public MessageResponse verify(@Valid @RequestBody VerificationFinishRequest request) {
-        return authService.verify(request);
+        return userVerificationService.verify(request);
     }
 }
