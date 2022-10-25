@@ -19,18 +19,21 @@ import java.util.Set;
 public class CardsController {
     private final CardService cardService;
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/decks/{deckId}/cards")
     public CardDto createCard(@PathVariable Long deckId,
                               @RequestBody CreateCardRequest cardDto) {
         return cardService.createCard(deckId, cardDto);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/decks/{deckId}/cards/")
     public List<CardDto> getCardsByDeck(@PathVariable Long deckId,
                                         @RequestParam(defaultValue = "") Set<State> filterStates) {
         return cardService.getCardsByDeck(deckId, filterStates);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PutMapping("/decks/{deckId}/cards/{cardId}")
     public CardDto updateCard(@PathVariable Long deckId,
                               @PathVariable Long cardId,
@@ -38,6 +41,7 @@ public class CardsController {
         return cardService.updateCard(deckId, cardId, cardDto);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PatchMapping("/decks/{deckId}/cards/{cardId}/status/{statusName}")
     public CardDto patchCardStatusName(@PathVariable Long deckId,
                               @PathVariable Long cardId,
@@ -45,6 +49,7 @@ public class CardsController {
         return cardService.patchCardStatusName(deckId, cardId, statusName);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @DeleteMapping("/decks/{deckId}/cards/{cardId}")
     public void deleteCard(@PathVariable Long deckId,
                               @PathVariable Long cardId) {
